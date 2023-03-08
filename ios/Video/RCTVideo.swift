@@ -5,6 +5,26 @@ import GoogleInteractiveMediaAds
 import React
 import Promises
 
+struct ExternalMetadata {
+    let title: String
+    let thumbnail: String
+    
+    let json: NSDictionary?
+    
+    init(_ json: NSDictionary!) {
+        guard json != nil else {
+            self.json = nil
+            self.title = ""
+            self.thumbnail = ""
+            return
+        }
+        self.json = json
+        self.title = json["title"] as? String ?? ""
+        self.thumbnail = json["thumbnail"] as? String ?? ""
+    }
+}
+
+
 class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverHandler {
 
     private var _player:AVPlayer?
@@ -69,6 +89,7 @@ class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverH
     /* Playhead used by the SDK to track content video progress and insert mid-rolls. */
     private var _contentPlayhead: IMAAVPlayerContentPlayhead?
 
+    private var _externalMetadata:ExternalMetadata?
     private var _resouceLoaderDelegate: RCTResourceLoaderDelegate?
     private var _playerObserver: RCTPlayerObserver = RCTPlayerObserver()
 
@@ -289,6 +310,7 @@ class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverH
                     guard let self = self else {throw  NSError(domain: "", code: 0, userInfo: nil)}
 
                     self._player?.pause()
+                    setMetadata(playerItem: playerItem, metaData: self._externalMetadata)
                     self._playerItem = playerItem
                     self._playerObserver.playerItem = self._playerItem
                     self.setPreferredForwardBufferDuration(self._preferredForwardBufferDuration)
@@ -361,6 +383,11 @@ class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverH
 
     // MARK: - Prop setters
 
+    @objc
+    func setExternalMetadata(_ metadata:NSDictionary) {
+        _externalMetadata = ExternalMetadata(metadata)
+    }
+    
     @objc
     func setResizeMode(_ mode: String?) {
         if _controls {
@@ -1132,4 +1159,31 @@ class RCTVideo: UIView, RCTVideoPlayerViewControllerDelegate, RCTPlayerObserverH
     //         }
     //         */
     //    }
+}
+
+func setMetadata(playerItem: AVPlayerItem, metaData: ExternalMetadata?) {
+    if #available(iOS 12.2, *)
+    {
+        if metaData != nil
+        {
+            if metaData?.title != nil
+            {
+                let titleItem = AVMutableMetadataItem()
+                titleItem.identifier = AVMetadataIdentifier.commonIdentifierTitle
+                titleItem.value = String(metaData?.title ?? "") as (NSCopying & NSObjectProtocol)
+                playerItem.externalMetadata.append(titleItem)
+            }
+            if metaData?.thumbnail != nil
+            {
+                if let string = metaData?.thumbnail,
+                let url = URL(string: string),
+                let data = try? Data(contentsOf: url) {
+                    let thumbItem = AVMutableMetadataItem()
+                    thumbItem.identifier = AVMetadataIdentifier.commonIdentifierArtwork
+                    thumbItem.value = data as (NSCopying & NSObjectProtocol)
+                    playerItem.externalMetadata.append(thumbItem)
+                }
+            }
+        }
+    }
 }

@@ -5,6 +5,9 @@ import android.content.Context;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.view.WindowInsetsController;
+import android.view.WindowInsets;
+import android.os.Build;
 
 import androidx.activity.OnBackPressedCallback;
 
@@ -48,6 +51,15 @@ public class FullScreenPlayerView extends Dialog {
     }
 
     super.onStart();
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    getWindow().setDecorFitsSystemWindows(false);
+    WindowInsetsController controller = getWindow().getInsetsController();
+    if (controller != null) {
+      controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+      controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+    }
+}
   }
 
   @Override

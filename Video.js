@@ -343,6 +343,7 @@ export default class Video extends Component {
         patchVer: source.patchVer || 0,
         requestHeaders: source.headers ? this.stringsOnlyObject(source.headers) : {},
       },
+      externalMetadata: this.props.iosExternalMetadata,
       onVideoLoadStart: this._onLoadStart,
       onVideoPlaybackStateChanged: this._onPlaybackStateChanged,
       onVideoLoad: this._onLoad,
@@ -561,6 +562,10 @@ Video.propTypes = {
   onExternalPlaybackChange: PropTypes.func,
   adTagUrl: PropTypes.string,
   onReceiveAdEvent: PropTypes.func,
+  externalMetadata: PropTypes.shape({
+    title: PropTypes.string,
+    thumbnail: PropTypes.string
+  }),
 
   /* Required by react-native */
   scaleX: PropTypes.number,
@@ -574,6 +579,7 @@ Video.propTypes = {
 const RCTVideo = requireNativeComponent('RCTVideo', Video, {
   nativeOnly: {
     src: true,
+    externalMetadata: true,
     seek: true,
     fullscreen: true,
   },
